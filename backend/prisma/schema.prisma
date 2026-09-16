@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SALES_USER
+}
+
+enum EnquiryStatus {
+  NEW
+  QUOTED
+  WON
+  LOST
+}
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
+enum SalesOrderStatus {
+  PENDING
+  CONFIRMED
+  DISPATCHED
+  CANCELLED
+}
+
+model User {
+  id           Int         @id @default(autoincrement())
+  name         String
+  email        String      @unique
+  passwordHash String
+  role         Role        @default(SALES_USER)
+  enquiries    Enquiry[]
+  quotations   Quotation[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Customer {
+  id            Int          @id @default(autoincrement())
+  companyName   String
+  contactPerson String
+  mobile        String
+  email         String?
+  city          String?
+  enquiries     Enquiry[]
+  quotations    Quotation[]
+  orders        SalesOrder[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([companyName])
+  @@index([email])
+}
+
+model Product {
+  id             Int              @id @default(autoincrement())
+  productCode    String           @unique
+  name           String
+  category       String
+  unit           String
+  basePrice      Decimal          @db.Decimal(12, 2)
+  inventory      Inventory?
+  enquiryItems   EnquiryItem[]
+  quotationItems QuotationItem[]
+  orderItems     SalesOrderItem[]
+  dispatchItems  DispatchItem[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model Inventory {
+  id          Int      @id @default(autoincrement())
+  productId   Int      @unique
+  product     Product  @relation(fields: [productId], references: [id])
+  physicalQty Int      @default(0)
+  reservedQty Int      @default(0)
+  damagedQty  Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+model Enquiry {
+  id           Int           @id @default(autoincrement())
+  enquiryNo    String        @unique
+  customerId   Int
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  createdById  Int
+  createdBy    User          @relation(fields: [createdById], references: [id])
+  enquiryDate  DateTime      @default(now())
+  requiredDate DateTime?
+  notes        String?
+  status       EnquiryStatus @default(NEW)
+  items        EnquiryItem[]
+  quotations   Quotation[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([status])
+}
+
+model EnquiryItem {
+  id        Int     @id @default(autoincrement())
+  enquiryId Int
+  enquiry   Enquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+
+  @@unique([enquiryId, productId])
+}
+
+model Quotation {
+  id          Int             @id @default(autoincrement())
+  quotationNo String          @unique
+  enquiryId   Int
+  enquiry     Enquiry         @relation(fields: [enquiryId], references: [id])
+  customerId  Int
+  customer    Customer        @relation(fields: [customerId], references: [id])
+  createdById Int
+  createdBy   User            @relation(fields: [createdById], references: [id])
+  validUntil  DateTime?
+  status      QuotationStatus @default(DRAFT)
+  subtotal    Decimal         @db.Decimal(12, 2)
+  discount    Decimal         @db.Decimal(12, 2)
+  tax         Decimal         @db.Decimal(12, 2)
+  total       Decimal         @db.Decimal(12, 2)
+  items       QuotationItem[]
+  order       SalesOrder?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([status])
+}
+
+model QuotationItem {
+  id          Int       @id @default(autoincrement())
+  quotationId Int
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  productId   Int
+  product     Product   @relation(fields: [productId], references: [id])
+  quantity    Int
+  unitPrice   Decimal   @db.Decimal(12, 2)
+  discountPct Decimal   @db.Decimal(5, 2)
+  taxPct      Decimal   @db.Decimal(5, 2)
+  lineAmount  Decimal   @db.Decimal(12, 2)
+}
+
+model SalesOrder {
+  id          Int              @id @default(autoincrement())
+  orderNo     String           @unique
+  quotationId Int              @unique
+  quotation   Quotation        @relation(fields: [quotationId], references: [id])
+  customerId  Int
+  customer    Customer         @relation(fields: [customerId], references: [id])
+  orderDate   DateTime         @default(now())
+  total       Decimal          @db.Decimal(12, 2)
+  status      SalesOrderStatus @default(PENDING)
+  items       SalesOrderItem[]
+  dispatch    Dispatch?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([status])
+}
+
+model SalesOrderItem {
+  id        Int        @id @default(autoincrement())
+  orderId   Int
+  order     SalesOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product    @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal    @db.Decimal(12, 2)
+}
+
+model Dispatch {
+  id            Int            @id @default(autoincrement())
+  dispatchNo    String         @unique
+  salesOrderId  Int            @unique
+  salesOrder    SalesOrder     @relation(fields: [salesOrderId], references: [id])
+  dispatchDate  DateTime       @default(now())
+  vehicleNumber String
+  driverName    String
+  items         DispatchItem[]
+}
+
+model DispatchItem {
+  id         Int      @id @default(autoincrement())
+  dispatchId Int
+  dispatch   Dispatch @relation(fields: [dispatchId], references: [id], onDelete: Cascade)
+  productId  Int
+  product    Product  @relation(fields: [productId], references: [id])
+  quantity   Int
+}

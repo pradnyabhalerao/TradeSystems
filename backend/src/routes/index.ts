@@ -1,0 +1,18 @@
+import { Router } from "express";
+import auth from "./auth.routes";
+import { authenticate, requireRole } from "../middleware/auth";
+import { Role } from "@prisma/client";
+import * as customers from "../controllers/customer.controller";
+import * as products from "../controllers/product.controller";
+import * as enquiries from "../controllers/enquiry.controller";
+import * as quotations from "../controllers/quotation.controller";
+import * as orders from "../controllers/order.controller";
+const router = Router();
+router.use("/auth", auth);
+router.use(authenticate);
+router.get("/customers", customers.listCustomers); router.post("/customers", customers.createCustomer); router.get("/customers/:id", customers.getCustomer); router.put("/customers/:id", customers.updateCustomer); router.delete("/customers/:id", requireRole(Role.ADMIN), customers.deleteCustomer);
+router.get("/products", products.listProducts); router.get("/inventory", products.listInventory); router.patch("/inventory/:productId", requireRole(Role.ADMIN), products.updateInventory);
+router.get("/enquiries", enquiries.listEnquiries); router.post("/enquiries", enquiries.createEnquiry); router.get("/enquiries/:id", enquiries.getEnquiry); router.patch("/enquiries/:id", enquiries.updateEnquiry);
+router.get("/quotations", quotations.listQuotations); router.post("/quotations", quotations.createQuotation); router.patch("/quotations/:id/status", quotations.updateQuotationStatus);
+router.get("/orders", orders.listOrders); router.post("/orders/from-quotation/:quotationId", orders.createOrder); router.patch("/orders/:id/confirm", requireRole(Role.ADMIN), orders.confirmOrder); router.patch("/orders/:id/cancel", orders.cancelOrder); router.post("/orders/:id/dispatch", requireRole(Role.ADMIN), orders.dispatchOrder);
+export default router;

@@ -1,0 +1,11 @@
+import cors from "cors";
+import express from "express";
+import routes from "./routes";
+import { errorHandler } from "./middleware/error";
+const app = express();
+app.use(cors({ origin: process.env.CORS_ORIGIN?.split(",") ?? true }));
+app.use(express.json());
+app.get("/api/health", (_req, res) => res.json({ success: true, message: "ERP API is running" }));
+app.use("/api", routes);
+app.use(errorHandler);
+export default app;

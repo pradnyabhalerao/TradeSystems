@@ -1,0 +1,10 @@
+import { z } from "zod";
+const positiveInt = z.number().int().positive();
+export const registerSchema = z.object({ name: z.string().trim().min(2).max(100), email: z.string().email(), password: z.string().min(8).max(100), role: z.enum(["ADMIN", "SALES_USER"]).optional() });
+export const loginSchema = z.object({ email: z.string().email(), password: z.string().min(1) });
+export const customerSchema = z.object({ companyName: z.string().trim().min(2), contactPerson: z.string().trim().min(2), mobile: z.string().trim().min(7), email: z.string().email().optional().or(z.literal("")), city: z.string().trim().optional() });
+export const enquirySchema = z.object({ customerId: positiveInt, requiredDate: z.string().datetime().optional(), notes: z.string().max(2000).optional(), items: z.array(z.object({ productId: positiveInt, quantity: positiveInt })).min(1) });
+export const quotationSchema = z.object({ enquiryId: positiveInt, validUntil: z.string().datetime().optional(), items: z.array(z.object({ productId: positiveInt, quantity: positiveInt, unitPrice: z.number().nonnegative(), discountPct: z.number().min(0).max(100), taxPct: z.number().min(0).max(100) })).min(1) });
+export const statusSchema = z.object({ status: z.string().min(1) });
+export const inventorySchema = z.object({ physicalQty: z.number().int().nonnegative(), damagedQty: z.number().int().nonnegative() });
+export const dispatchSchema = z.object({ vehicleNumber: z.string().trim().min(2), driverName: z.string().trim().min(2) });

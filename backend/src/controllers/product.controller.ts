@@ -1,0 +1,7 @@
+import { Request, Response } from "express";
+import { prisma } from "../db";
+import { idParam, HttpError } from "../utils/http";
+import { inventorySchema } from "../utils/validation";
+export async function listProducts(_req: Request, res: Response) { const rows = await prisma.product.findMany({ include: { inventory: true }, orderBy: { name: "asc" } }); res.json({ success: true, data: rows.map(({ inventory, ...product }) => ({ ...product, inventory, availableQty: (inventory?.physicalQty ?? 0) - (inventory?.reservedQty ?? 0) - (inventory?.damagedQty ?? 0) })) }); }
+export async function listInventory(_req: Request, res: Response) { const rows = await prisma.inventory.findMany({ include: { product: true }, orderBy: { product: { name: "asc" } } }); res.json({ success: true, data: rows.map(row => ({ ...row, availableQty: row.physicalQty - row.reservedQty - row.damagedQty })) }); }
+export async function updateInventory(req: Request, res: Response) { const productId = idParam(req.params.productId); const data = inventorySchema.parse(req.body); const current = await prisma.inventory.findUnique({ where: { productId } }); if (!current || data.physicalQty < current.reservedQty + data.damagedQty) throw new HttpError(400, "Physical quantity cannot be below reserved plus damaged stock"); const row = await prisma.inventory.update({ where: { productId }, data }); res.json({ success: true, data: { ...row, availableQty: row.physicalQty - row.reservedQty - row.damagedQty } }); }
