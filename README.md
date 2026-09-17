@@ -1,4 +1,4 @@
-# ForgeFlow ERP
+# Trade System
 
 A focused PERN ERP workflow for industrial sales operations:
 

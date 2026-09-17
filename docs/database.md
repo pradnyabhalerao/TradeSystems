@@ -11,3 +11,23 @@ Products connect to enquiry, quotation, order, and dispatch line items. Inventor
 Available quantity is calculated as:
 
 `physicalQty - reservedQty - damagedQty`
+
+```mermaid
+erDiagram
+  USER ||--o{ ENQUIRY : creates
+  USER ||--o{ QUOTATION : creates
+  CUSTOMER ||--o{ ENQUIRY : raises
+  CUSTOMER ||--o{ QUOTATION : receives
+  CUSTOMER ||--o{ SALES_ORDER : places
+  ENQUIRY ||--o{ ENQUIRY_ITEM : contains
+  PRODUCT ||--o{ ENQUIRY_ITEM : requested
+  ENQUIRY ||--o{ QUOTATION : priced_as
+  QUOTATION ||--o{ QUOTATION_ITEM : contains
+  PRODUCT ||--o{ QUOTATION_ITEM : quoted
+  QUOTATION ||--|| SALES_ORDER : converts_to
+  SALES_ORDER ||--o{ SALES_ORDER_ITEM : contains
+  PRODUCT ||--o{ SALES_ORDER_ITEM : ordered
+  PRODUCT ||--|| INVENTORY : has
+  SALES_ORDER ||--o| DISPATCH : fulfilled_by
+  DISPATCH ||--o{ DISPATCH_ITEM : contains
+```

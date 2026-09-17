@@ -9,7 +9,7 @@ export async function register(req: Request, res: Response) {
   const data = registerSchema.parse(req.body);
   const exists = await prisma.user.findUnique({ where: { email: data.email } });
   if (exists) return res.status(409).json({ success: false, message: "Email is already registered" });
-  const user = await prisma.user.create({ data: { ...data, role: data.role as Role ?? Role.SALES_USER, passwordHash: await bcrypt.hash(data.password, 12) }, select: { id: true, name: true, email: true, role: true } });
+  const user = await prisma.user.create({ data: { name: data.name, email: data.email, role: Role.SALES_USER, passwordHash: await bcrypt.hash(data.password, 12) }, select: { id: true, name: true, email: true, role: true } });
   res.status(201).json({ success: true, user });
 }
 export async function login(req: Request, res: Response) {
