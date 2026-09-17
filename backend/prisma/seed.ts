@@ -13,7 +13,7 @@ async function main() {
   const passwordHash = await bcrypt.hash("Admin@123", 12);
   const admin = await prisma.user.upsert({ where: { email: "admin@erp-portal.local" }, update: { passwordHash, role: Role.ADMIN }, create: { name: "ERP Administrator", email: "admin@erp-portal.local", passwordHash, role: Role.ADMIN } });
   await prisma.user.upsert({ where: { email: "sales@erp-portal.local" }, update: { passwordHash, role: Role.SALES_USER }, create: { name: "Sales User", email: "sales@erp-portal.local", passwordHash, role: Role.SALES_USER } });
-  const customer = await prisma.customer.upsert({ where: { id: 1 }, update: {}, create: { companyName: "ABC Engineering Pvt. Ltd.", contactPerson: "Ananya Mehta", mobile: "9876543210", email: "purchase@abc-engineering.example", city: "Pune" } });
+  const customer = await prisma.customer.upsert({ where: { id: 1 }, update: { contactPerson: "Pradnya Bhalerao" }, create: { companyName: "ABC Engineering Pvt. Ltd.", contactPerson: "Pradnya Bhalerao", mobile: "9876543210", email: "purchase@abc-engineering.example", city: "Pune" } });
   for (const [productCode, name, category, unit, basePrice, physicalQty] of products) {
     const product = await prisma.product.upsert({ where: { productCode }, update: { name, category, unit, basePrice }, create: { productCode, name, category, unit, basePrice } });
     await prisma.inventory.upsert({ where: { productId: product.id }, update: { physicalQty }, create: { productId: product.id, physicalQty, reservedQty: 0, damagedQty: 0 } });
